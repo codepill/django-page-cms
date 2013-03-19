@@ -112,6 +112,20 @@ class Details(object):
                 if page:
                     if page.delegate_to:
                         return page
+                    # find children and take first one (auto-delegate)
+                    children = page.get_children().filter(
+                        status__in=(Page.PUBLISHED, Page.HIDDEN), sites=settings.SITE_ID)
+                    first_child = None
+                    while children:
+                        first_child = children[0]
+                        if first_child.expose_content():
+                            children = None
+                        else:
+                            children = first_child.get_children().filter(
+                                status__in=(Page.PUBLISHED, Page.HIDDEN), sites=settings.SITE_ID)
+                    if first_child:
+                        first_child.redirect_to_url = first_child.get_url_path(lang)
+                        return first_child
                 path = remove_slug(path)
                 
         return None
